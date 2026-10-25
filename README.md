@@ -26,6 +26,7 @@
 | `api.timeout` | 请求超时秒数，默认 180。 |
 | `api.proxy` / `api.extra_headers` | 可选。代理地址、自定义请求头。 |
 | `image.size` / `quality` / `output_format` / `background` | 默认出图参数；指令里显式传参优先。 |
+| `image.moderation` | 内容审核强度，`auto`（默认，不发送该字段）/ `low`（放宽）。**仅文生图生效**，官方 `/images/edits` 没有这个字段，`/改图` 不会发送。 |
 | `image.max_reference_images` / `max_side` | 参考图张数上限、参考图最长边（超过会等比缩小）。 |
 | `prompt.prefix` / `suffix` | 拼在用户提示词前后的固定文字，不替换、不改写原文。 |
 | `access.whitelist` / `blacklist` / `admin_only` | 权限。黑名单优先，白名单留空表示不限制。用户 ID 用换行、逗号或空格分隔。 |

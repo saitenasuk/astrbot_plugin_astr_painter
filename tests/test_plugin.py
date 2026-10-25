@@ -367,3 +367,31 @@ async def test_slot_released_when_task_cancelled_before_start(plugin, monkeypatc
     assert plugin._semaphore._value == 1
     assert not plugin._tasks
     await plugin.terminate()
+
+
+async def test_command_sends_moderation_for_generate_only(plugin, monkeypatch, tmp_path):
+    calls = []
+
+    async def fake_generate(**kwargs):
+        calls.append(kwargs)
+        return fake_image()
+
+    monkeypatch.setattr(plugin, "_generate", fake_generate)
+    plugin.settings = main.Settings.from_config(
+        {"api": {"api_key": "k"}, "image": {"moderation": "low"}, "quota": {"cooldown_seconds": 0}}
+    )
+    await drain(plugin.cmd_generate(AstrMessageEvent(message_str="/生图 猫")))
+    for task in list(plugin._tasks):
+        await task
+
+    image_path = tmp_path / "r.png"
+    image_path.write_bytes(make_png_bytes())
+    reply = Reply(chain=[Image(str(image_path))])
+    await drain(plugin.cmd_edit(AstrMessageEvent(message_str="/改图 换背景", messages=[reply])))
+    for task in list(plugin._tasks):
+        await task
+
+    assert calls[0]["moderation"] == "low"
+    assert calls[1]["moderation"] == "low"
+    # 真正决定发不发的是 client：edit 分支会在 payload 里丢掉它。
+    assert calls[1]["references"]

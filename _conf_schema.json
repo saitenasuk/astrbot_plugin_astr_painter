@@ -77,6 +77,15 @@
         "options": ["auto", "transparent", "opaque"],
         "hint": "transparent 用于透明背景；接口不支持该字段时可能忽略或报错。"
       },
+      "moderation": {
+        "description": "内容审核强度",
+        "type": "string",
+        "default": "auto",
+        "options": ["auto", "low"],
+        "labels": ["标准（auto）", "放宽（low）"],
+        "subtitles": ["接口默认审核，违规时可能出图失败", "少拦擦边与复杂构图"],
+        "hint": "仅文生图（/生图）生效：官方 /images/edits 没有 moderation 字段，/改图 不会发送。选 auto 时不发送该参数，完全交给接口默认值。"
+      },
       "max_reference_images": {
         "description": "最多参考图数量",
         "type": "int",

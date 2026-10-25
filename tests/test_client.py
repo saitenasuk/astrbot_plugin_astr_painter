@@ -258,3 +258,51 @@ async def test_extra_headers_are_sent():
         await gen.aclose()
 
     assert captured["x"] == "abc"
+
+
+async def test_moderation_sent_for_generate():
+    body = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body["raw"] = request.read().decode()
+        return image_response(make_png_bytes())
+
+    gen = client(handler)
+    try:
+        await gen.generate(PROMPT, moderation="low")
+    finally:
+        await gen.aclose()
+
+    assert '"moderation": "low"' in body["raw"] or '"moderation":"low"' in body["raw"]
+
+
+async def test_moderation_omitted_when_auto():
+    body = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body["raw"] = request.read().decode()
+        return image_response(make_png_bytes())
+
+    gen = client(handler)
+    try:
+        await gen.generate(PROMPT, moderation="auto")
+    finally:
+        await gen.aclose()
+
+    assert "moderation" not in body["raw"]
+
+
+async def test_edit_never_sends_moderation():
+    bodies: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(request.read().decode("utf-8", "ignore"))
+        return image_response(make_png_bytes())
+
+    gen = client(handler)
+    try:
+        await gen.edit(PROMPT, [reference()], moderation="low")
+    finally:
+        await gen.aclose()
+
+    assert "moderation" not in bodies[0]

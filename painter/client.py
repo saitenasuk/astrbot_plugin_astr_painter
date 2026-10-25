@@ -67,13 +67,16 @@ class ImagesClient:
         quality: str = "",
         output_format: str = "",
         background: str = "",
+        moderation: str = "",
     ) -> GeneratedImage:
+        # moderation 只在文生图发：官方 /images/edits 没有这个字段。
         payload = self._payload(
             prompt,
             size=size,
             quality=quality,
             output_format=output_format,
             background=background,
+            moderation=moderation,
         )
         try:
             response = await self._post_json("generate", payload)
@@ -93,9 +96,12 @@ class ImagesClient:
         quality: str = "",
         output_format: str = "",
         background: str = "",
+        moderation: str = "",
     ) -> GeneratedImage:
         if not images:
             raise PainterError("没有可用的参考图。")
+        # moderation 接受但不生效：官方 /images/edits 没有该字段，传了反而可能被
+        # 严格校验的中转站拒掉。这里是「仅文生图生效」这条规则的唯一落点。
         payload = self._payload(
             prompt,
             size=size,
@@ -133,6 +139,7 @@ class ImagesClient:
         quality: str = "",
         output_format: str = "",
         background: str = "",
+        moderation: str = "",
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {"model": self._settings.model, "prompt": prompt, "n": 1}
         if size and size != "auto":
@@ -143,6 +150,8 @@ class ImagesClient:
             payload["quality"] = quality
         if background and background != "auto":
             payload["background"] = background
+        if moderation and moderation != "auto":
+            payload["moderation"] = moderation
         if output_format:
             payload["output_format"] = output_format
         return payload

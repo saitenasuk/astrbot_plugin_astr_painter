@@ -159,6 +159,7 @@ class AstrPainterPlugin(Star):
                 output_format=options.output_format or settings.output_format,
                 background="transparent" if options.transparent else settings.background,
                 consumed_quota=consumed,
+                moderation=settings.moderation,
                 note=note,
             )
         )
@@ -256,6 +257,7 @@ class AstrPainterPlugin(Star):
                 output_format=settings.output_format,
                 background="transparent" if options.transparent else settings.background,
                 consumed_quota=consumed,
+                moderation=settings.moderation,
             )
         )
         self._inflight[request_key] = task
@@ -284,6 +286,7 @@ class AstrPainterPlugin(Star):
         output_format: str,
         background: str,
         consumed_quota: bool,
+        moderation: str = "",
         note: str = "",
     ) -> None:
         started = time.monotonic()
@@ -295,6 +298,7 @@ class AstrPainterPlugin(Star):
                 quality=quality,
                 output_format=output_format,
                 background=background,
+                moderation=moderation,
             )
             elapsed = time.monotonic() - started
             path = self._store.save(image.data, image.ext)
@@ -332,6 +336,7 @@ class AstrPainterPlugin(Star):
         quality: str,
         output_format: str,
         background: str,
+        moderation: str = "",
     ) -> GeneratedImage:
         client = self._ensure_client()
         if references:
@@ -342,6 +347,7 @@ class AstrPainterPlugin(Star):
                 quality=quality,
                 output_format=output_format,
                 background=background,
+                moderation=moderation,
             )
         return await client.generate(
             prompt,
@@ -349,6 +355,7 @@ class AstrPainterPlugin(Star):
             quality=quality,
             output_format=output_format,
             background=background,
+            moderation=moderation,
         )
 
     def _ensure_client(self) -> ImagesClient:

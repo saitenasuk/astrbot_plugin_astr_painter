@@ -24,6 +24,7 @@ VALID_SIZES = ("auto", "1024x1024", "1536x1024", "1024x1536")
 VALID_QUALITY = ("auto", "low", "medium", "high")
 VALID_FORMATS = ("png", "jpeg", "webp")
 VALID_BACKGROUND = ("auto", "transparent", "opaque")
+VALID_MODERATION = ("auto", "low")
 
 _KNOWN_ENDPOINT_SUFFIXES = ("/images/generations", "/images/edits", "/images")
 
@@ -45,6 +46,8 @@ class Settings:
     quality: str = "auto"
     output_format: str = "png"
     background: str = "auto"
+    moderation: str = "auto"
+    """内容审核强度。仅文生图生效：官方 /images/edits 没有这个字段。"""
     max_reference_images: int = 4
     max_side: int = 2048
 
@@ -93,6 +96,7 @@ class Settings:
             quality=_choice(image, "quality", "auto", VALID_QUALITY),
             output_format=_choice(image, "output_format", "png", VALID_FORMATS),
             background=_choice(image, "background", "auto", VALID_BACKGROUND),
+            moderation=_choice(image, "moderation", "auto", VALID_MODERATION),
             max_reference_images=_int(image, "max_reference_images", 4, minimum=1, maximum=16),
             max_side=_int(image, "max_side", 2048, minimum=256, maximum=4096),
             prompt_prefix=_str(prompt, "prefix", "").strip(),

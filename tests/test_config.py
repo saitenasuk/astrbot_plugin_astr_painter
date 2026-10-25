@@ -89,3 +89,9 @@ def test_validate_passes_with_key():
 def test_pending_message_has_fallback():
     settings = Settings.from_config({"runtime": {"pending_message": "   "}})
     assert settings.pending_message == "🎨 收到，正在绘制…"
+
+
+def test_moderation_default_and_choice():
+    assert Settings.from_config({}).moderation == "auto"
+    assert Settings.from_config({"image": {"moderation": "low"}}).moderation == "low"
+    assert Settings.from_config({"image": {"moderation": "high"}}).moderation == "auto"
