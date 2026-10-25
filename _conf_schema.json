@@ -1,0 +1,229 @@
+{
+  "api": {
+    "description": "生图接口",
+    "type": "object",
+    "hint": "兼容 OpenAI 官方 Images API 与标准 OpenAI-compatible 接口：文生图 POST {base_url}/images/generations，图生图 POST {base_url}/images/edits。",
+    "items": {
+      "base_url": {
+        "description": "Base URL",
+        "type": "string",
+        "default": "https://api.openai.com/v1",
+        "hint": "填到 /v1 即可，插件会自动补 /images/generations 或 /images/edits。"
+      },
+      "api_key": {
+        "description": "API Key",
+        "type": "string",
+        "default": "",
+        "secret": true,
+        "hint": "供应商提供的 API Key。未配置时插件不会发送任何请求。"
+      },
+      "model": {
+        "description": "模型名",
+        "type": "string",
+        "default": "gpt-image-1",
+        "hint": "按供应商实际模型名填写，例如 gpt-image-1、dall-e-3，或中转站自定义的模型名。"
+      },
+      "timeout": {
+        "description": "请求超时（秒）",
+        "type": "int",
+        "default": 180,
+        "slider": { "min": 30, "max": 600, "step": 10 },
+        "hint": "生图较慢，建议 120-300 秒。"
+      },
+      "proxy": {
+        "description": "代理地址",
+        "type": "string",
+        "default": "",
+        "hint": "可选。例如 http://127.0.0.1:7890；留空则跟随系统环境变量。"
+      },
+      "extra_headers": {
+        "description": "额外请求头",
+        "type": "dict",
+        "default": {},
+        "hint": "可选。需要自定义鉴权头或渠道标识时填写，例如 {\"X-Channel\": \"xxx\"}。"
+      }
+    }
+  },
+  "image": {
+    "description": "出图参数",
+    "type": "object",
+    "hint": "指令或 LLM 工具显式传参时会覆盖这里的默认值。",
+    "items": {
+      "size": {
+        "description": "默认像素尺寸",
+        "type": "string",
+        "default": "auto",
+        "options": ["auto", "1024x1024", "1536x1024", "1024x1536"],
+        "hint": "auto 表示交给接口默认值；也可以用 --size 传其它 WxH（部分中转站支持扩展尺寸）。"
+      },
+      "quality": {
+        "description": "默认质量",
+        "type": "string",
+        "default": "auto",
+        "options": ["auto", "low", "medium", "high"],
+        "hint": "日常用 auto；需要精细成品图时选 high。"
+      },
+      "output_format": {
+        "description": "输出格式",
+        "type": "string",
+        "default": "png",
+        "options": ["png", "jpeg", "webp"],
+        "hint": "透明背景建议 png 或 webp。"
+      },
+      "background": {
+        "description": "背景",
+        "type": "string",
+        "default": "auto",
+        "options": ["auto", "transparent", "opaque"],
+        "hint": "transparent 用于透明背景；接口不支持该字段时可能忽略或报错。"
+      },
+      "max_reference_images": {
+        "description": "最多参考图数量",
+        "type": "int",
+        "default": 4,
+        "slider": { "min": 1, "max": 16, "step": 1 },
+        "hint": "图生图时从当前消息、引用消息、合并转发里最多取几张图。"
+      },
+      "max_side": {
+        "description": "参考图最大边长",
+        "type": "int",
+        "default": 2048,
+        "slider": { "min": 512, "max": 4096, "step": 128 },
+        "hint": "超过该边长的参考图会被等比缩小后再上传。"
+      }
+    }
+  },
+  "prompt": {
+    "description": "提示词处理",
+    "type": "object",
+    "hint": "只做拼接，不改写用户提示词。",
+    "items": {
+      "prefix": {
+        "description": "提示词前缀",
+        "type": "string",
+        "default": "",
+        "hint": "可选。每次出图都会加在用户提示词之前，例如画风约定。"
+      },
+      "suffix": {
+        "description": "提示词后缀",
+        "type": "string",
+        "default": "",
+        "hint": "可选。每次出图都会加在用户提示词之后，例如画质约定。"
+      }
+    }
+  },
+  "access": {
+    "description": "使用权限",
+    "type": "object",
+    "hint": "用户 ID / 群号按换行、英文逗号或空格分隔。黑名单优先级最高。",
+    "items": {
+      "whitelist": {
+        "description": "用户白名单",
+        "type": "text",
+        "default": "",
+        "hint": "留空表示不限制；填写后只有名单内的用户可以使用指令和 LLM 工具。"
+      },
+      "blacklist": {
+        "description": "用户黑名单",
+        "type": "text",
+        "default": "",
+        "hint": "名单内的用户不能使用指令和 LLM 工具，优先级高于白名单。"
+      },
+      "admin_only": {
+        "description": "仅管理员可用",
+        "type": "bool",
+        "default": false,
+        "hint": "开启后只有 AstrBot 管理员能调用生图。"
+      }
+    }
+  },
+  "quota": {
+    "description": "额度与频率",
+    "type": "object",
+    "hint": "按用户统计，跨天自动重置。提交任务即计数，生成失败会自动退回。",
+    "items": {
+      "enabled": {
+        "description": "启用每日次数限制",
+        "type": "bool",
+        "default": false
+      },
+      "daily_limit": {
+        "description": "每人每日上限",
+        "type": "int",
+        "default": 20,
+        "slider": { "min": 1, "max": 500, "step": 1 },
+        "hint": "仅在启用每日次数限制时生效。"
+      },
+      "cooldown_seconds": {
+        "description": "用户冷却（秒）",
+        "type": "int",
+        "default": 10,
+        "slider": { "min": 0, "max": 600, "step": 5 },
+        "hint": "两次生图之间的最小间隔，0 表示不限制。重启插件后冷却记录会清空。"
+      },
+      "admin_bypass": {
+        "description": "管理员不受限制",
+        "type": "bool",
+        "default": true,
+        "hint": "开启后管理员跳过每日次数与冷却。"
+      }
+    }
+  },
+  "runtime": {
+    "description": "运行行为",
+    "type": "object",
+    "items": {
+      "max_concurrent": {
+        "description": "并发生图数量",
+        "type": "int",
+        "default": 1,
+        "slider": { "min": 1, "max": 8, "step": 1 },
+        "hint": "同时进行的生成任务上限，超过的部分排队。"
+      },
+      "queue_wait_seconds": {
+        "description": "排队等待上限（秒）",
+        "type": "int",
+        "default": 30,
+        "slider": { "min": 0, "max": 300, "step": 5 },
+        "hint": "排队超过该时间会直接提示繁忙，不再发起请求。"
+      },
+      "enable_llm_tool": {
+        "description": "允许 LLM 自动调用生图",
+        "type": "bool",
+        "default": true,
+        "hint": "开启后注册 generate_image 工具，聊天中自然语言即可出图。"
+      },
+      "tool_instruction": {
+        "description": "工具使用说明",
+        "type": "text",
+        "default": "你可以使用 generate_image 工具为用户生成或修改图片。仅在用户明确要求出图、改图、画一张时调用；普通聊天、写作、设计建议、参数咨询不要调用。用户要求基于图片修改、合成、延续风格时，把 reference_images 设为 true。提示词要具体、完整，包含主体、风格、构图、光线与需要出现的文字。",
+        "hint": "追加到系统提示词，教模型什么时候调用生图工具。留空则不注入。"
+      },
+      "pending_message": {
+        "description": "等待回复文案",
+        "type": "string",
+        "default": "🎨 收到，正在绘制…",
+        "hint": "指令提交成功后的即时回复；图片生成完成后会再单独发一条消息。"
+      },
+      "show_meta": {
+        "description": "显示生成信息",
+        "type": "bool",
+        "default": false,
+        "hint": "在图片后附带模型、尺寸与耗时。"
+      },
+      "storage_max_files": {
+        "description": "生成图保留上限",
+        "type": "int",
+        "default": 500,
+        "slider": { "min": 20, "max": 5000, "step": 10 },
+        "hint": "data/plugin_data/astrbot_plugin_astr_painter/images 下最多保留的文件数，超出后从最旧的开始删除。"
+      },
+      "debug_log_response": {
+        "description": "记录接口响应摘要",
+        "type": "bool",
+        "default": false,
+        "hint": "排障用。开启后在日志中记录接口返回的截断内容，可能包含提示词，请勿长期开启。"
+      }
+    }
+  }
+}
